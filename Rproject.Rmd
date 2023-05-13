@@ -1,0 +1,125 @@
+---
+title: "Dasboard for Video Games Sales"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(plotly)
+
+setwd("G:/")
+df <- read.csv("vgsales.csv", header = TRUE)
+```
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### Top 10 Video Games: North America vs Japan
+
+```{r}
+# 1. Top 10 Video Games: North America vs Japan
+top_na_jp <- df[order(df$NA_Sales + df$JP_Sales, decreasing = TRUE), ][1:10, ]
+
+fig <- plot_ly(top_na_jp, x = ~Name, y = ~NA_Sales, type = 'bar',
+               name = 'North America', marker = list(color = '#7B68EE'),
+               hoverinfo = 'text', text = ~paste("Game Name: ", Name, "<br>Sales in North America: ", NA_Sales))
+
+fig <- fig %>% add_trace(y = ~JP_Sales, name = 'Japan', marker = list(color = '#FFD700'),
+                         hoverinfo = 'text', text = ~paste("Game Name: ", Name, "<br>Sales in Japan: ", JP_Sales))
+
+layout(fig, xaxis = list(title = "Game Name"),
+                      yaxis = list(title = "Sales (in millions)"))
+
+
+
+
+```
+
+
+### Most Popular Genres in Japan
+
+```{r}
+# 2. Filter for Japan sales data
+genres_jp <- df %>%
+  group_by(Genre) %>%
+  summarize(total_sales = sum(JP_Sales)) %>%
+  arrange(desc(total_sales))
+
+fig <- plot_ly(genres_jp, x = ~Genre, y = ~total_sales, type = 'bar',
+               marker = list(color = 'orange'),
+               hoverinfo = 'text', text = ~paste("Genre: ", Genre, "<br>Total Sales in Japan: ", total_sales))
+
+layout(fig, xaxis = list(title = "Genre"),
+                      yaxis = list(title = "Total Sales in Japan (in millions)"))
+
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Total Sales of Video Games by Publisher in 2015
+
+```{r}
+# 3. Highest global selling publisher in 2015
+
+# Filter for games sold in 2015
+df_filtered <- df %>% filter(Year >= 2015 & Year <= 2015)
+
+# Group by publisher and sum the global sales
+publisher_sales <- df_filtered %>% 
+  group_by(Publisher) %>% 
+  summarise(Global_Sales = sum(Global_Sales)) %>% 
+  arrange(desc(Global_Sales))
+
+# Create the bar chart
+# Create the line chart
+line_chart <- plot_ly(publisher_sales, x = ~Publisher, y = ~Global_Sales, type = "scatter", mode = "lines+markers",
+                 marker = list(color = "#008080"))
+
+# Set axis labels and title
+layout(line_chart, xaxis = list(title = "Publisher"), yaxis = list(title = "Total Sales (millions)"))
+
+
+
+
+
+```
+### Top 10 games with maximum global sales
+```{r}
+# 4.  Filter for top 10 games with maximum global sales
+top10_games <- df %>% 
+  group_by(Name) %>% 
+  summarise(Global_Sales = sum(Global_Sales)) %>% 
+  arrange(desc(Global_Sales)) %>% 
+  slice(1:10)
+
+# Plot the graph
+bar_chart <- plot_ly(top10_games, x = ~Name, y = ~Global_Sales, type = "bar", color = "set2")
+
+layout(bar_chart ,xaxis = list(title = "Game"), yaxis = list(title = "Global Sales"))
+
+
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+### Proportion of Video Game Sales by Platform
+```{r}
+# 5. Proportion of sales by platform
+platform_sales <- df %>% 
+  group_by(Platform) %>% 
+  summarise(Global_Sales = sum(Global_Sales))
+
+
+# Create the pie chart
+pie_chart <- plot_ly(platform_sales, labels = ~Platform, values = ~Global_Sales, type = "pie")
+layout(pie_chart)
+
+```
+
